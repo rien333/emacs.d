@@ -9,8 +9,8 @@ read-process-output-max (* 1024 1024) ;; 1mb
   (setq use-package-always-ensure t
         use-package-expand-minimally t))
 
-(setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
-                         ("melpa" . "https://melpa.org/packages/")))
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("gnu" . "https://elpa.gnu.org/packages/")))
 ;; (package-initialize)
 
 ;; TODO: move to use-package
@@ -47,7 +47,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
       backup-directory-alist `((".*" . ,temporary-file-directory))
       auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
 )
-
+(setq epa-pinentry-mode 'loopback)
 ;; ignore cites in markdown
 ;; - [ ] TODO: fixme?
 (add-to-list 'ispell-skip-region-alist '("@\\w*"))
@@ -261,6 +261,12 @@ read-process-output-max (* 1024 1024) ;; 1mb
 (use-package ripgrep :ensure-system-package rg :commands (ripgrep-regexp))
 (use-package rainbow-mode :diminish rainbow-mode :commands (rainbow-mode))
 (use-package yaml-mode :mode ("\\.yaml\\'" . yaml-mode))
+
+(use-package rcirc
+  :config
+  (load-library "~/.emacs.d/irc-secrets.el.gpg")
+  :commands (rirc irc)
+)
 
 (use-package proced
   :ensure nil
@@ -564,10 +570,8 @@ read-process-output-max (* 1024 1024) ;; 1mb
   :hook
   (vterm-mode . (lambda ()
                   (setq-local global-hl-line-mode nil)
-                  (yas-minor-mode -1)
                   (text-scale-decrease 1)
                   (setq-local show-paren-mode nil)))
-  ;; (vterm-copy-mode . god-mode)
   :config
   (diminish 'vterm-copy-mode
           '(:propertize " VTermCopy" face '(:weight bold)))
@@ -864,4 +868,4 @@ read-process-output-max (* 1024 1024) ;; 1mb
  '(custom-safe-themes
    '("6ebdb33507c7db94b28d7787f802f38ac8d2b8cd08506797b3af6cdfd80632e0" default))
  '(package-selected-packages
-   '(systemd magit yasnippet yasnippet-snippets pdf-loader tramp-theme pkgbuild-mode yaml-mode daemons daemons.el all-the-icons-dired nerd-icons-completion all-the-icons-completion all-the-icons-nerd-fonts sudo-edit diminish zenburn-theme yapfify windresize vterm transpose-frame smooth-scrolling smex ripgrep rainbow-mode pdf-tools olivetti multiple-cursors move-text lua-mode lsp-ui lorem-ipsum imenu-anywhere idomenu ido-vertical-mode ido-completing-read+ god-mode fish-mode expand-region evil-numbers emojify dockerfile-mode dired-rainbow csv-mode company-box checkbox all-the-icons adwaita-dark-theme ace-window)))
+   '(yasnippet systemd magit pdf-loader tramp-theme pkgbuild-mode yaml-mode daemons daemons.el all-the-icons-dired nerd-icons-completion all-the-icons-completion all-the-icons-nerd-fonts sudo-edit diminish zenburn-theme yapfify windresize vterm transpose-frame smooth-scrolling smex ripgrep rainbow-mode pdf-tools olivetti multiple-cursors move-text lua-mode lsp-ui lorem-ipsum imenu-anywhere idomenu ido-vertical-mode ido-completing-read+ god-mode fish-mode expand-region evil-numbers emojify dockerfile-mode dired-rainbow csv-mode company-box checkbox all-the-icons adwaita-dark-theme ace-window)))
