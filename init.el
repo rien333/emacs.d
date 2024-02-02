@@ -340,8 +340,8 @@ read-process-output-max (* 1024 1024) ;; 1mb
 (use-package yasnippet-snippets :after (yasnippet))
 
 (use-package magit
-  :bind (("C-c g" . magit-status)
-         ("C-c C-g" . magit-status)))
+  :bind (("C-x g" . magit-status)
+         ("C-x C-g" . magit-status)))
 
 (use-package dockerfile-mode
   :mode
@@ -596,6 +596,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
          ("s-v" . vterm)
          ("s-<return>" . vterm-other-window)
          :map vterm-mode-map
+         ("<escape>" . vterm-copy-mode)
          ("C-S-K" . previous-line)
          ("C-S-J" . next-line)
          ("C-r" . (lambda () (interactive)
