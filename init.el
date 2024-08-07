@@ -1,6 +1,6 @@
 ;; use more memory (LSP recommendations)
-(setq gc-cons-threshold 100000000)
-read-process-output-max (* 1024 1024) ;; 1mb
+(setq gc-cons-threshold 100000000
+read-process-output-max (* 1024 1024)) ;; 1mb
 
 (eval-when-compile
   (require 'use-package))
@@ -13,83 +13,44 @@ read-process-output-max (* 1024 1024) ;; 1mb
                          ("gnu" . "https://elpa.gnu.org/packages/")))
 ;; (package-initialize)
 
-;; TODO: move to use-package
-;; this fucks with elisp behavior, i.e. removes all other imenu items
-(add-hook 'emacs-lisp-mode-hook
-          (lambda ()
-            (setq-local imenu-generic-expression
-                        '((nil ";; # \\(.*\\)" 1)))))
+;; load time profiling
+;; (setq use-package-compute-statistics t)
 
-;; # 👱🏼 variables
-(setq tramp-allow-unsafe-temporary-files t
-      ;; confirm-kill-processes nil
-      vc-ignore-dir-regexp
-      (format "\\(%s\\)\\|\\(%s\\)"
-              vc-ignore-dir-regexp
-              tramp-file-name-regexp)
-      ring-bell-function 'ignore
-      pgtk-use-im-context-on-new-connection nil ;; fixes S-SPC
-      native-comp-async-report-warnings-errors nil
-      native-comp-compiler-options '("-O2" "-march=znver4")
-      large-file-warning-threshold 700000000
-      display-time-default-load-average nil
-      mouse-sel-mode t
-      mouse-autoselect-window t ;; focus-follows-mouse
-      use-short-answers t
-      make-backup-files nil
-      temporary-file-directory "~/.emacs.d/emacs-backups"
-      real-auto-save-interval 120 ;; in seconds
-      inhibit-startup-screen t
-      initial-scratch-message nil
-      mouse-drag-copy-region 'non-empty ;; autocopy on mouse selection
-      parens-require-spaces nil ;; pairs do not need extra spaces
-      ;; store all backup and autosave files in the tmp dir
-      backup-directory-alist `((".*" . ,temporary-file-directory))
-      auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
-)
-(setq epa-pinentry-mode 'loopback)
 ;; ignore cites in markdown
 ;; - [ ] TODO: fixme?
 (add-to-list 'ispell-skip-region-alist '("@\\w*"))
 
 ;; modeline
 (setq-default mode-line-format
-              '((:eval (when (file-remote-p default-directory) 
+              '((:eval (when (file-remote-p default-directory)
                          "tramp:"))
                 (:eval (propertize "%b" 'face 'bold))
                 (:eval (if (buffer-modified-p) "*" " ")) "   "
                 mode-line-position mode-line-read-only-help-echo "  " mode-line-modes))
 
+(add-to-list 'auto-mode-alist '("\\.txt\\'" . 'conf-unix-mode))
 (delete-selection-mode 1)
 
-(setq-default major-mode 'shell-script-mode)
-(add-to-list 'auto-mode-alist '("\\.txt\\'" . 'conf-unix-mode))
-
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-(electric-indent-mode 0)
-
 ;; #  UI
-;; set initial window size. NOTE: fucks with GNOME's tiling
-;; (setq initial-frame-alist
-;;        '((top . 20) (left . 20) (width . 69) (height . 32)))
-(setq blink-cursor-mode nil)
 ;; (xterm-mouse-mode 1) ;; only needed for terminal
 (pixel-scroll-precision-mode)
-(setq-default frame-title-format '("%b - Emacs"))
+;; (setq-default frame-title-format '("%b - Emacs"))
 ;; doesn't work, annoyingly
 ;; (setq-default frame-title-format '((:eval (string-replace "" "  " "%b")) "- Emacs "))
-;; (setq-default frame-title-format '("   Emacs"))
+
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (global-hl-line-mode 1)
 (savehist-mode t)
 
-;; # 📔 Functions
-
 (use-package emacs
   :config
+  ;; # 📔 Global functions
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda ()
+              (setq-local imenu-generic-expression
+                          '((nil ";; # \\(.*\\)" 1)))))
   (defun copy-thing (begin-of-thing end-of-thing &optional arg)
     "copy thing between beg & end into kill ring"
     (save-excursion
@@ -120,7 +81,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
     (interactive)
     (when (region-active-p)
       (let* ((input-text (buffer-substring-no-properties (region-beginning) (region-end)))
-             (command (format "pandoc -s -f markdown -t html -V colorlinks=true -V linkcolor=blue -V urlcolor=blue 2> /dev/null | wl-copy -t text/html")))
+             (command (format "pandoc -s -f markdown -t html -V colorlinks=true -V linkcolor=blue -V urlcolor=blue  2> /dev/null --highlight-style pygments | cat ~/.emacs.d/pandoc.html - (echo \"</html>\" | psub) | wl-copy -t text/html")))
         (shell-command-on-region (region-beginning) (region-end) command nil nil "*pandoc-output*")
         (message "Copied rich text to clipboard"))))
 
@@ -165,6 +126,10 @@ read-process-output-max (* 1024 1024) ;; 1mb
     (interactive "*P")
     (insert-pair arg ?\' ?\'))
 
+  (defun insert-ticks (&optional arg)
+    (interactive "*P")
+    (insert-pair arg ?\` ?\`))
+
   (defun insert-braces (&optional arg)
     (interactive "*P")
     (insert-pair arg ?\{ ?\}))
@@ -177,57 +142,111 @@ read-process-output-max (* 1024 1024) ;; 1mb
     (interactive "*P")
     (insert-pair arg ?\< ?\>))
 
+  ;; QMK unicode compability
+  (define-key global-map (kbd "C-S-u") 'read-unicode-char)
+
+  (defun read-unicode-char (c1 c2 c3 c4 c5 _trailing_space_ignored)
+    "Convert unicode input C1 C2 C3 C4 C5  to the corresponding insert char call."
+    (interactive "c\nc\nc\nc\nc\nc")
+    (insert-char (string-to-number (format "%c%c%c%c%c" c1 c2 c3 c4 c5) 16)))
+
   (defun insert-dollars (&optional arg)
     (interactive "*P")
     (insert-pair arg ?\$ ?\$))
+
+  ;; stop emacs from closing all windows after pressing ESC three times
+  (defun my-keyboard-escape-quit (fun &rest args)
+    (cl-letf (((symbol-function 'one-window-p) (lambda (&rest _) t)))
+      (apply fun args)))
+  
+  (advice-add 'keyboard-escape-quit :around #'my-keyboard-escape-quit)
+  
+  (setq-default major-mode 'shell-script-mode
+                indent-tabs-mode nil
+                tab-width 4
+                frame-title-format '("   %b")
+                initial-major-mode 'markdown-mode)
+  ;; # 👱🏼 variables
+  (setq tramp-allow-unsafe-temporary-files t
+        blink-cursor-mode nil
+        disabled-command-function nil ;; emacs disables some commands by default; don't.
+        delete-pair-blink-delay 0
+        vc-ignore-dir-regexp
+        (format "\\(%s\\)\\|\\(%s\\)"
+                vc-ignore-dir-regexp
+                tramp-file-name-regexp)
+        ring-bell-function 'ignore
+        auto-revert-verbose nil ;; turn off autosave messages
+        pgtk-use-im-context-on-new-connection nil ;; fixes S-SPC
+        native-comp-async-report-warnings-errors nil
+        native-comp-compiler-options '("-O2" "-march=znver4")
+        epa-pinentry-mode 'loopback
+        large-file-warning-threshold 700000000
+        display-time-default-load-average nil
+        mouse-sel-mode t
+        mouse-autoselect-window t ;; focus-follows-mouse
+        use-short-answers t
+        make-backup-files nil
+        temporary-file-directory "~/.emacs.d/emacs-backups"
+        inhibit-startup-screen t
+        initial-scratch-message nil
+        mouse-drag-copy-region 'non-empty ;; autocopy on mouse selection
+        parens-require-spaces nil ;; pairs do not need extra spaces
+        ;; store all backup and autosave files in the tmp dir
+        backup-directory-alist `((".*" . ,temporary-file-directory))
+        auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
   :bind
   ;; # ⌨ global binds
   (("M-\"" . insert-double-quotes)
    ("M-p $" . insert-dollars)
    ("M-p <" . insert-signs)
+   ("M-p `" . insert-ticks)
    ("M-p [" . insert-brackets)
    ("M-p {" . insert-braces)
+   ("M-p d" . delete-pair)
    ("M-'" . insert-quotations)
    ("M-\"" . insert-pair)
    ("C-x k" . kill-current-buffer)
    ("C-x C-k" . kill-current-buffer)
    ("C-c w" . copy-word)
    ("C-c l" . copy-line)
+   ("C-x C-S-f" . find-file-other-window)
+   ("M-?" . nil)
+   ("C-z" . nil)
    ("M-;" . comment-or-uncomment-region-or-line)
-   ("M-D" . duplicate-current-line-or-region))
+   ("M-D" . duplicate-current-line-or-region)
+   ("M-g" . goto-line)
+   ("C-x B" . buffer-menu)
+   ("C-+" . text-scale-increase)
+   ("C-=" . text-scale-increase)
+   ("C--" . text-scale-decrease)
+   ("s-=" . text-scale-increase)
+   ("s--" . text-scale-decrease)
+   ("C-x C-w" . whitespace-mode)
+   ("M-i" . insert-char)
+   ("C-x C-Z" . nil) ; Don't  quit by accident with ctrl+z
+   ("M-<mouse-3>" . mouse-buffer-menu)
+   ("<mouse-2>" . yank) ; yank with middle
+   ;; #   window binds
+   ("s-b" . balance-windows)
+   ("s-r" . transpose-frame)
+   ("s-h" . windmove-left)
+   ("s-l" . windmove-right)
+   ("s-k" . windmove-up)
+   ("s-j" . windmove-down)
+   ("s-<left>" . windmove-left)
+   ("s-<right>" . windmove-right)
+   ("s-<up>" . windmove-up)
+   ("s-<down>" . windmove-down)
+   ("s-y" . ace-swap-window)
+   ("C-x <left>" . windmove-left)
+   ("C-x <right>" . windmove-right)
+   ("C-x <up>" . windmove-up)
+   ("C-x <down>" . windmove-down)
+   ("C-x 0" . delete-window))
 )
 
-(global-set-key (kbd "M-SPC") (kbd "C-u C-SPC"))
-(global-set-key (kbd "M-g") 'goto-line)
-(global-set-key (kbd "C-x B") 'buffer-menu)
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "s-=") 'text-scale-increase)
-(global-set-key (kbd "s--") 'text-scale-decrease)
-(global-set-key (kbd "C-x C-w") 'whitespace-mode)
-(global-set-key (kbd "M-i") 'insert-char)
-(global-set-key "\C-x\C-z" nil) ; Don't quit by accident with ctrl+z
-(global-unset-key [M-mouse-3])
-(global-set-key [M-mouse-3] 'mouse-buffer-menu)
-;; #   window binds
-(global-set-key (kbd "s-y") 'ace-swap-window)
-(global-set-key (kbd "s-b") 'balance-windows)
-(global-set-key (kbd "s-r") 'transpose-frame)
-(global-set-key (kbd "s-h") 'windmove-left)
-(global-set-key (kbd "s-l") 'windmove-right)
-(global-set-key (kbd "s-k") 'windmove-up)
-(global-set-key (kbd "s-j") 'windmove-down)
-(global-set-key (kbd "s-<left>") 'windmove-left)
-(global-set-key (kbd "s-<right>") 'windmove-right)
-(global-set-key (kbd "s-<up>") 'windmove-up)
-(global-set-key (kbd "s-<down>") 'windmove-down)
-(global-set-key (kbd "C-x <left>") 'windmove-left)
-(global-set-key (kbd "C-x <right>") 'windmove-right)
-(global-set-key (kbd "C-x <up>") 'windmove-up)
-(global-set-key (kbd "C-x <down>") 'windmove-down)
-(global-set-key (kbd "C-x 0") 'delete-window)
-
-(keymap-global-set "<mouse-2>" 'yank) ; what does this do?
-
+(keymap-global-set "M-SPC" "C-u C-SPC")
 
 ;; # 📦 use-package
 
@@ -255,6 +274,11 @@ read-process-output-max (* 1024 1024) ;; 1mb
 
 (use-package multiple-cursors
   :commands (mc/edit-lines mc/mark-all-like-this mc/mark-all-in-region)
+  :bind
+  (("C-z n" . mc/mark-next-like-this)
+   ("C-z p" . mc/mark-previous-like-this)
+   ("C-z a" . mc/mark-all-like-this)
+   ("C-z e" . mc/edit-lines))
   :config (setq mc/always-run-for-all t))
 
 (use-package windresize :bind ("s-s" . windresize))
@@ -263,6 +287,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
 (use-package yaml-mode :mode ("\\.yaml\\'" . yaml-mode))
 
 (use-package rcirc
+  :ensure nil
   :config
   (load-library "~/.emacs.d/irc-secrets.el.gpg")
   :commands (rirc irc)
@@ -270,26 +295,24 @@ read-process-output-max (* 1024 1024) ;; 1mb
 
 (use-package proced
   :ensure nil
-  :config 
+  :commands (proced)
+  :hook
+  (proced-mode . (lambda () (proced-toggle-auto-update 1)))
+  :config
   (setq proced-enable-color-flag t
         proced-auto-update-flag t
         proced-auto-update-interval 1)
 )
 
-
 ;; use-package with build-in package
 (use-package ido
-  :demand t
   :ensure nil
-  :bind ("C-x C-b" . ido-switch-buffer)
+  :bind (("C-x C-b" . ido-switch-buffer))
   :config
   (setq ido-enable-flex-matching t
         ido-create-new-buffer 'always ;; skip asking
         ido-everywhere t)
-  (ido-mode)
-)
-
-;; (define-key ido-completion-map (kbd "C-r") 'ido-recentf-open)
+  (ido-mode))
 
 (use-package ido-vertical-mode
   :after (ido)
@@ -297,8 +320,8 @@ read-process-output-max (* 1024 1024) ;; 1mb
   (ido-vertical-mode 1)
   (setq ido-vertical-define-keys 'C-n-and-C-p-only))
 
-(use-package all-the-icons-nerd-fonts)
 (use-package nerd-icons-completion
+  :commands (nerd-icons-insert)
   :config
   (nerd-icons-completion-mode))
 
@@ -317,6 +340,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
 
 (use-package ido-completing-read+
   :after (ido)
+  :defer ;; fucks with startup time otherwhise
   :config
   (ido-ubiquitous-mode)
   (setq ido-cr+-max-items 50000))
@@ -330,14 +354,26 @@ read-process-output-max (* 1024 1024) ;; 1mb
   (("C-j" . ido-imenu-anywhere)))
 
 (use-package eldoc :diminish eldoc-mode)
+
 (use-package yasnippet
+  :ensure t
+  :defer 2 ;; fixes LSP; yas needs to be loaded
+  :config
+  (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
   :diminish yas-minor-mode
+  :commands (yas-insert-snippet)
   :hook ((prog-mode
+          nxml-mode
+          html-mode
+          sgml-mode
           conf-mode
           snippet-mode) . yas-minor-mode-on)
+  :bind ("C-'" . yas-insert-snippet)
 )
 
-(use-package yasnippet-snippets :after (yasnippet))
+(use-package yasnippet-snippets
+  :after yasnippet
+  :config (yasnippet-snippets-initialize))
 
 (use-package magit
   :bind (("C-x g" . magit-status)
@@ -359,6 +395,8 @@ read-process-output-max (* 1024 1024) ;; 1mb
   :interpreter "lua")
 
 (use-package pkgbuild-mode
+  :hook
+  ((pkgbuild-mode . (lambda () (flymake-mode -1))))
   :mode
   ("\\PKGBUILD\\'" . pkgbuild-mode))
 
@@ -380,19 +418,22 @@ read-process-output-max (* 1024 1024) ;; 1mb
   ((prog-mode . company-mode)
    (markdown-mode . company-mode))
   :config
-  (setq company-idle-delay 0.1 
+  (setq company-idle-delay 0.06
         company-selection-wrap-around t
         company-minimum-prefix-length 2))
 
-(use-package company-box :after (company))
+(use-package company-box
+  :defer 1
+  :after (company))
 
 ;; # 📖 lsp-mode
 (use-package lsp-mode
   :commands (lsp lsp-deferred)
+  :init
+  (setq lsp-keymap-prefix "C-c l")
   :config
   ;; disable some distractions
-  (setq lsp-keymap-prefix "C-c l" ;; Or 'C-l', 's-l'
-        lsp-lens-enable nil
+  (setq lsp-lens-enable nil
         lsp-headerline-breadcrumb-enable nil
         lsp-modeline-diagnostics-enable nil
         lsp-modeline-code-actions-enable nil
@@ -407,26 +448,42 @@ read-process-output-max (* 1024 1024) ;; 1mb
         lsp-pyls-plugins-pyflakes-enabled nil
         lsp-pylsp-plugins-flake8-enabled nil
         lsp-ruff-lsp-log-level "off")
+  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
+  :bind-keymap
+  ("C-c l" . lsp-command-map)
+  :bind (:map lsp-mode-map ("M-p" . nil))
   :hook
-  ((python-mode . lsp) (c-mode . lsp)))
+  ((python-mode . lsp)
+   (python-ts-mode . lsp)
+   (nxml-mode . lsp)
+   (vala-mode . lsp)
+   (c-mode . lsp)))
+
+(use-package lsp-ui :after (lsp-mode))
 
 (use-package recentf
   :ensure nil
+  :defer 1
   :bind
-  (("C-x r" . ido-recentf-open)
-   ("C-x C-r" . ido-recentf-open))
-  :init
-  (recentf-mode t)
+  (("C-x C-r" . ido-recentf-open))
   :config
+  (defun no-msg (function)
+    "Prevent `function` from echoing"
+    (let ((inhibit-message  t))
+      (funcall function)))
+
+  (advice-add 'recentf-auto-cleanup :around 'no-msg)
+
+  (recentf-mode t)
   (defun ido-recentf-open ()
     "Use `ido-completing-read' to \\[find-file] a recent file"
     (interactive)
     (if (find-file (ido-completing-read "Find recent file: " recentf-list))
         (message "Opening file...")
       (message "Aborting")))
-  (setq recentf-max-saved-items 270))
-
-(use-package hideshow :ensure nil)
+  ;; disable running recentf cleanup on startup
+  (setq recentf-auto-cleanup 300)
+  (setq recentf-max-saved-items 300))
 
 (use-package nxml
   :ensure nil
@@ -438,6 +495,8 @@ read-process-output-max (* 1024 1024) ;; 1mb
                "<!--"
                sgml-skip-tag-forward
                nil))
+  (setq-default nxml-child-indent 4 nxml-attribute-indent 4
+                nxml-outline-child-indent 4)
   :mode
   (("\\.xsd\\'" . nxml-mode)
    ("\\.xml\\'" . nxml-mode))
@@ -447,9 +506,20 @@ read-process-output-max (* 1024 1024) ;; 1mb
   :hook
   ((nxml-mode . hs-minor-mode)
    (nxml-mode . display-line-numbers-mode)
-   (nxml-mode . (lambda ()  (local-set-key (kbd "C-c h") 'hs-toggle-hiding)))) ;; doesn't work in :map for some reason
+   (nxml-mode . (lambda ()
+                  ;; doesn't work in :map for some reason
+                  (local-set-key (kbd "C-c h") 'hs-toggle-hiding)
+                  ;; move cursor into tag (i.e. <tag>█...</tag>)
+                  (local-set-key (kbd "C-M-i") 'nxml-down-element)))) 
   :config
   (setq nxml-slash-auto-complete-flag t))
+
+;; attempt to change the face of HTML tags only
+;; (use-package sgml-mode
+;;   :ensure nil
+;;   :custom-face
+;;   ;; might be needed because of adwaita-theme?
+;;   (font-lock-function-name-face ((t (:inherit nil :foreground "#ffa348")))))
 
 ;; # 📁 dired
 (use-package dired
@@ -488,6 +558,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
         ("O" . dired-open-file)
         ("C-c C-t" . dired-toggle-read-only)
         ("<mouse-1>" . dired-find-file)
+        ("<mouse-3>" . dired-mouse-find-file-other-window)
         ("<mouse-2>" . dired-find-file)))
 
 (use-package wdired
@@ -497,7 +568,10 @@ read-process-output-max (* 1024 1024) ;; 1mb
   (:map wdired-mode-map
         ("C-c C-t" . wdired-finish-edit)))
 
-(use-package lsp-ui :after (lsp-mode))
+;; (use-package casual-dired
+;;   :defer 2
+;;   :after (dired)
+;;   :bind (:map dired-mode-map ("C-x d" . 'casual-dired-tmenu)))
 
 (use-package move-text
   :bind
@@ -508,11 +582,38 @@ read-process-output-max (* 1024 1024) ;; 1mb
                                                yapfify-region-or-buffer))
 
 (use-package checkbox
-  :custom (checkbox-states '("- [ ]" "- [x]"))
+  :custom
+  (checkbox-states '("- [ ]" "- [x]"))
   :bind ("C-c C-c" . checkbox-toggle))
 
-;; # 🖊 markdown-mode
+
+(use-package tex-mode
+  :ensure nil
+  :config
+  (setq-local comment-region-function 'comment-region-default)
+  (setq my-latex-command "pdflatex --interaction nonstopmode")
+  (defun latex-to-pdf ()
+    "Compile buffer to pdf using my-latex-command"
+    (interactive)
+    (save-buffer)
+    (message (concat "Compiling " (buffer-name) "..."))
+    ;; (message (concat my-latex-command " " (buffer-file-name) " & ")
+    (call-process-shell-command
+     (concat my-latex-command " '" buffer-file-name "' & ") nil 0))
+  :bind
+  (:map latex-mode-map
+        ("C-c C-s" . latex-insert-block)
+        ("C-c C-c" . latex-to-pdf)
+        ("C-c c" . latex-to-pdf))
+  :mode
+  (("\\.latex\\'" . latex-mode)
+   ("\\.tex\\'" . latex-mode)))
+
+
+;; # ✏ markdown-mode
 (use-package markdown-mode
+  :custom
+  (markdown-header-scaling t)
   :init
   (defun inline-markdown-comment (&optional arg)
     (interactive "*P")
@@ -520,7 +621,6 @@ read-process-output-max (* 1024 1024) ;; 1mb
      ((equal current-prefix-arg nil) ; no C-u
       (insert-pair arg "<!-- " "-->"))
      (t (uncomment-sexp))))
-  (setq-default initial-major-mode 'markdown-mode)
   (defun un-indent-by-removing-2-spaces ()
     "remove 2 spaces from beginning of of line"
     (interactive)
@@ -531,10 +631,26 @@ read-process-output-max (* 1024 1024) ;; 1mb
           (untabify (match-beginning 0) (match-end 0)))
         (when (looking-at "^  ")
           (replace-match "")))))
+  ;; fix expand region in markdown comments
+  (defun my-advice--point-is-in-comment-p (orig-fun &rest args)
+  "Return t if point is in comment or markdown comment."
+  (or (apply orig-fun args)
+      (eq (get-text-property (point) 'face) 'markdown-comment-face)))
+
+  (advice-add 'er--point-is-in-comment-p :around #'my-advice--point-is-in-comment-p)
+
   :config
-  (setq markdown-header-scaling 1)
   (setq markdown-fontify-code-blocks-natively t)
   (setq markdown-add-footnotes-to-imenu nil)
+  (setq markdown-italic-underscore t)
+  (setq markdown-asymmetric-header t)
+  (setq markdown-disable-tooltip-prompt t)
+  (set-face-attribute 'markdown-header-face-1 nil
+                      :height 1.55)
+  (set-face-attribute 'markdown-header-face-2 nil
+                      :height 1.2)
+  (set-face-attribute 'markdown-header-face-3 nil
+                      :height 1.1)
   :bind
   (:map markdown-mode-map
         ("<backtab>". un-indent-by-removing-2-spaces)
@@ -587,11 +703,10 @@ read-process-output-max (* 1024 1024) ;; 1mb
   (setq vterm-max-scrollback 15000)
   (setq vterm-min-window-width 70)
   ;; the :map mechanism doesn't work?
-  (define-key vterm-copy-mode-map (kbd "q") 
+  (define-key vterm-copy-mode-map (kbd "q")
               #'(lambda () (interactive) (vterm-copy-mode -1)))
   :bind (("C-M-S-<return>" . vterm-new-window)
          ("C-M-S-v" . vterm)
-         ("C-M-S-o" . vterm-other-window)
          ("s-o" . vterm-other-window)
          ("s-v" . vterm)
          ("s-<return>" . vterm-other-window)
@@ -603,7 +718,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
                     (vterm-copy-mode)
                     (isearch-backward)))
          ("C-;" . (lambda () (interactive)
-                    (avy-goto-word-0 nil)
+                    (avy-goto-char-timer)
                     (vterm-copy-mode)))
          ("C-_" . nil)
          ("C-u" . vterm--self-insert)
@@ -611,12 +726,11 @@ read-process-output-max (* 1024 1024) ;; 1mb
          :map vterm-copy-mode-map
          ("q" . (lambda () (interactive)
                   (when (use-region-p)
-                    (kill-ring-save (region-beginning) 
+                    (kill-ring-save (region-beginning)
                                     (region-end)))
                   (vterm-copy-mode -1)))
          )
 )
-
 
 (use-package pdf-tools
   :init
@@ -625,10 +739,13 @@ read-process-output-max (* 1024 1024) ;; 1mb
     (pdf-annot-add-highlight-markup-annotation
      (pdf-view-active-region) "#7EB7E7"))
   :mode
-  (("\\.pdf$" . pdf-view-mode))
+  (("\\.pdf" . pdf-view-mode))
   :magic ("%PDF" . pdf-view-mode)
   :config
   (pdf-tools-install :no-query)
+  (setq pdf-cache-prefetch-delay 0.1
+        pdf-cache-image-limit 128
+        pdf-view-midnight-colors '("white smoke" . "black"))
   (setq pdf-annot-edit-contents-setup-function
         (lambda (_annot) (markdown-mode)))
   (setq-default pdf-view-display-size 'fit-page)
@@ -656,6 +773,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
         ("i" . pdf-view-previous-page)
         ("l" . image-forward-hscroll)
         ("h" . image-backward-hscroll)
+        ("C-=" . pdf-view-enlarge)
         ("g" . pdf-view-first-page)
         ("G" . pdf-view-last-page)
         ("M-g" . pdf-view-goto-page)
@@ -668,6 +786,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
         ("/" . isearch-forward)
         ("n" . nil)
         ("p" . nil)
+        ("!" . pdf-view-midnight-minor-mode)
         ("m" . pdf-annot-add-highlight-markup-annotation)
         ("M" . pdf-highlight-blue)
         ("t" . pdf-annot-add-text-annotation)
@@ -682,7 +801,8 @@ read-process-output-max (* 1024 1024) ;; 1mb
                            lorem-ipsum-insert-paragraphs))
 
 (use-package sqlite-mode-extras
-  :commands sqlite-mode-open-file
+  :commands (sqlite-mode-open-file)
+  :defer 1
   :load-path "lisp/"
   :demand
   :bind (:map
@@ -727,14 +847,6 @@ read-process-output-max (* 1024 1024) ;; 1mb
     (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
     (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*")))
 
-(use-package cmake-ts-mode
-  :ensure nil
-  :mode ("\\.cmake\\'" . cmake-ts-mode))
-
-(use-package python-ts-mode
-  :ensure nil
-  :mode ("\\.py\\'" . python-ts-mode))
-
 (use-package god-mode
   :bind (("<escape>" . god-local-mode)
          (:map god-local-mode-map
@@ -758,7 +870,7 @@ read-process-output-max (* 1024 1024) ;; 1mb
   :bind
   (("C-x C-e" . prefix-emojify-insert-emoji)))
 
-(use-package expand-region :bind (("M-=" . er/expand-region)))
+(use-package expand-region :bind (("M-=" . er/expand-region) ("M--" . er/contract-region)))
 
 (use-package paren
   :ensure nil
@@ -769,24 +881,17 @@ read-process-output-max (* 1024 1024) ;; 1mb
 ;; #   tab-bar
 (use-package tab-bar
   :ensure nil
-  :init
+  :defer t
+  :config
   (defun tab-bar-tab-name-format-dot (tab i)
     "Add a dot between the tab number and tab name"
     (let ((current-p (eq (car tab) 'current-tab)))
       (propertize
-       (concat (if tab-bar-tab-hints (format " %d " i) "")
-               (alist-get 'name tab)
-               (or (and tab-bar-close-button-show
-                        (not (eq tab-bar-close-button-show
-                                 (if current-p 'non-selected 'selected)))
-                        tab-bar-close-button)
-                   ""))
+       (concat (format "● %d " i)
+               (alist-get 'name tab))
        'face (funcall tab-bar-tab-face-function tab))))
-  :config
   (setq tab-bar-tab-name-format-function #'tab-bar-tab-name-format-dot)
-  ;; (setq tab-bar-mode 1)
   (setq tab-bar-show 1)
-  (setq tab-bar-tab-hints t)
   (setq tab-bar-new-tab-choice "*scratch*")
   (setq tab-bar-new-tab-to 'rightmost)
   (setq tab-bar-tab-name-function 'tab-bar-tab-name-current)
@@ -796,11 +901,11 @@ read-process-output-max (* 1024 1024) ;; 1mb
   (setq tab-bar-format
         '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator tab-bar-format-align-right tab-bar-format-global))
   ;; add clock to bar
-  ;; (setq display-time-format "  %R")
-  ;; (setq display-time-interval 1)
-  ;; (display-time-mode)
-  :custom-face
-  (tab-bar-tab ((t nil)))
+  ;; this slows down emacs for some reason
+  ;; (setq display-time-format "  %a %b %R")
+  (setq display-time-format "%a %d %b %R")
+  (setq display-time-interval 15)
+  (display-time-mode)
   :bind
   (
    ("s-1" . (lambda () (interactive) (tab-bar-select-tab 1)))
@@ -817,23 +922,17 @@ read-process-output-max (* 1024 1024) ;; 1mb
    ("s-<" . tab-previous)
    ("s-K" . tab-next)
    ("s-J" . tab-previous)
-   ("C-M-!" . (lambda () (interactive) (tab-bar-select-tab 1)))
-   ("C-M-@" . (lambda () (interactive) (tab-bar-select-tab 2)))
-   ("C-M-#" . (lambda () (interactive) (tab-bar-select-tab 3)))
-   ("C-M-$" . (lambda () (interactive) (tab-bar-select-tab 4)))
-   ("C-M-S-t" . tab-bar-new-tab)
-   ("C-M-S-w" . tab-bar-close-tab)
-   ("C-M->" . tab-next)
-   ("C-M-<" . tab-previous)
    ("<mouse-9>" . tab-next)
    ("<mouse-8>" . tab-previous)))
 
 (use-package man
   :ensure nil
+  :commands (man)
   :config
   (setq Man-notify-method 'pushy)
   (setq Man-width-max 140)
   :bind
+  ("C-h M" . man)
   (:map Man-mode-map
         ("h" . backward-char)
         ("l" . forward-char)
@@ -869,4 +968,5 @@ read-process-output-max (* 1024 1024) ;; 1mb
  '(custom-safe-themes
    '("6ebdb33507c7db94b28d7787f802f38ac8d2b8cd08506797b3af6cdfd80632e0" default))
  '(package-selected-packages
-   '(yasnippet systemd magit pdf-loader tramp-theme pkgbuild-mode yaml-mode daemons daemons.el all-the-icons-dired nerd-icons-completion all-the-icons-completion all-the-icons-nerd-fonts sudo-edit diminish zenburn-theme yapfify windresize vterm transpose-frame smooth-scrolling smex ripgrep rainbow-mode pdf-tools olivetti multiple-cursors move-text lua-mode lsp-ui lorem-ipsum imenu-anywhere idomenu ido-vertical-mode ido-completing-read+ god-mode fish-mode expand-region evil-numbers emojify dockerfile-mode dired-rainbow csv-mode company-box checkbox all-the-icons adwaita-dark-theme ace-window)))
+   '(html magit pdf-tools yasnippet-snippets ztree php-mode vala-mode meson-mode go-mode systemd pdf-loader tramp-theme pkgbuild-mode yaml-mode daemons daemons.el all-the-icons-dired nerd-icons-completion all-the-icons-completion all-the-icons-nerd-fonts sudo-edit diminish zenburn-theme yapfify windresize vterm transpose-frame smooth-scrolling smex ripgrep rainbow-mode olivetti multiple-cursors move-text lua-mode lorem-ipsum imenu-anywhere idomenu ido-vertical-mode ido-completing-read+ god-mode fish-mode expand-region evil-numbers emojify dockerfile-mode dired-rainbow csv-mode company-box checkbox all-the-icons adwaita-dark-theme ace-window)))
+
