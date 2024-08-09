@@ -514,12 +514,14 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :config
   (setq nxml-slash-auto-complete-flag t))
 
-;; attempt to change the face of HTML tags only
-;; (use-package sgml-mode
-;;   :ensure nil
-;;   :custom-face
-;;   ;; might be needed because of adwaita-theme?
-;;   (font-lock-function-name-face ((t (:inherit nil :foreground "#ffa348")))))
+(use-package mhtml-mode
+  :ensure nil
+  :config
+  (add-hook 'mhtml-mode-hook
+            (lambda ()
+              ;; needs `face-remap-add-relative` to be mode specific
+              (face-remap-add-relative 'font-lock-function-name-face nil :foreground "#ffa348"))))
+
 
 ;; # 📁 dired
 (use-package dired
