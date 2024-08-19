@@ -210,6 +210,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    ("C-x C-k" . kill-current-buffer)
    ("C-c w" . copy-word)
    ("C-c l" . copy-line)
+   ("C-x \~" . (lambda () (interactive)
+                (let ((default-directory "~")) (ido-find-file))))
    ("C-x C-S-f" . find-file-other-window)
    ("M-?" . nil)
    ("C-z" . nil)
@@ -259,7 +261,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (adwaita-dark-theme-pad-tab-bar t)
   (adwaita-dark-theme-pad-tab-line t)
   :custom-face
-  (font-lock-keyword-face ((t (:foreground "#ffa348" :weight normal))))
+    (font-lock-keyword-face ((t (:foreground "#ffa348" :weight normal))))
+  (font-lock-variable-name-face ((t (:foreground "#78aeed" :weight normal))))
   (font-lockf-comment-face ((t (:foreground "#656565" :slant italic))))
   (show-paren-match ((t (:background "steelblue3"))))
   :config
@@ -268,6 +271,20 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 (use-package systemd :mode ("\\.service\\'" . systemd-mode))
 (use-package diminish)
 (use-package sudo-edit :commands (sudo-edit))
+
+(use-package image-mode
+  :ensure nil
+  :bind
+  (:map image-mode-map
+  (("h" . image-backward-hscroll)
+   ("j" . image-next-line)
+   ("k" . image-previous-line)
+   ("l" . image-forward-hscroll)
+   ("+" . image-increase-size)
+   ("-" . image-descrease-size)
+   ("s" . image-transform-reset-to-initial)
+   ("a" . image-transform-fit-both)))
+)
 
 (use-package avy
   :bind (("C-;" . avy-goto-word-1)))
@@ -355,29 +372,31 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 
 (use-package eldoc :diminish eldoc-mode)
 
-(use-package yasnippet
-  :ensure t
-  :defer 2 ;; fixes LSP; yas needs to be loaded
-  :config
-  (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
-  :diminish yas-minor-mode
-  :commands (yas-insert-snippet)
-  :hook ((prog-mode
-          nxml-mode
-          html-mode
-          sgml-mode
-          conf-mode
-          snippet-mode) . yas-minor-mode-on)
-  :bind ("C-'" . yas-insert-snippet)
-)
+;; (use-package yasnippet
+;;   :ensure t
+;;   :defer 2 ;; fixes LSP; yas needs to be loaded
+;;   :config
+;;   (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
+;;   :diminish yas-minor-mode
+;;   :commands (yas-insert-snippet)
+;;   :hook ((prog-mode
+;;           nxml-mode
+;;           html-mode
+;;           sgml-mode
+;;           conf-mode
+;;           snippet-mode) . yas-minor-mode-on)
+;;   :bind ("C-'" . yas-insert-snippet)
+;; )
 
-(use-package yasnippet-snippets
-  :after yasnippet
-  :config (yasnippet-snippets-initialize))
+;; (use-package yasnippet-snippets
+;;   :after yasnippet
+;;   :config (yasnippet-snippets-initialize))
 
 (use-package magit
   :bind (("C-x g" . magit-status)
-         ("C-x C-g" . magit-status)))
+         ("C-x C-g" . magit-status)
+         ("s-x" . magit-status)
+         ("s-g" . magit-status)))
 
 (use-package dockerfile-mode
   :mode
@@ -454,7 +473,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :bind (:map lsp-mode-map ("M-p" . nil))
   :hook
   ((python-mode . lsp)
-   (python-ts-mode . lsp)
+   ;; (python-ts-mode . lsp)
    (nxml-mode . lsp)
    (vala-mode . lsp)
    (c-mode . lsp)))
@@ -968,7 +987,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("6ebdb33507c7db94b28d7787f802f38ac8d2b8cd08506797b3af6cdfd80632e0" default))
- '(package-selected-packages
-   '(html magit pdf-tools yasnippet-snippets ztree php-mode vala-mode meson-mode go-mode systemd pdf-loader tramp-theme pkgbuild-mode yaml-mode daemons daemons.el all-the-icons-dired nerd-icons-completion all-the-icons-completion all-the-icons-nerd-fonts sudo-edit diminish zenburn-theme yapfify windresize vterm transpose-frame smooth-scrolling smex ripgrep rainbow-mode olivetti multiple-cursors move-text lua-mode lorem-ipsum imenu-anywhere idomenu ido-vertical-mode ido-completing-read+ god-mode fish-mode expand-region evil-numbers emojify dockerfile-mode dired-rainbow csv-mode company-box checkbox all-the-icons adwaita-dark-theme ace-window)))
+   '("ee0785c299c1d228ed30cf278aab82cf1fa05a2dc122e425044e758203f097d2"
+     "6ebdb33507c7db94b28d7787f802f38ac8d2b8cd08506797b3af6cdfd80632e0"
+     default))
+ '(package-selected-packages nil)
+ '(warning-suppress-log-types '((unlock-file))))
 
