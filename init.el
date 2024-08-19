@@ -372,25 +372,25 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 
 (use-package eldoc :diminish eldoc-mode)
 
-;; (use-package yasnippet
-;;   :ensure t
-;;   :defer 2 ;; fixes LSP; yas needs to be loaded
-;;   :config
-;;   (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
-;;   :diminish yas-minor-mode
-;;   :commands (yas-insert-snippet)
-;;   :hook ((prog-mode
-;;           nxml-mode
-;;           html-mode
-;;           sgml-mode
-;;           conf-mode
-;;           snippet-mode) . yas-minor-mode-on)
-;;   :bind ("C-'" . yas-insert-snippet)
-;; )
+(use-package yasnippet
+  :ensure t
+  :defer 2 ;; fixes LSP; yas needs to be loaded
+  :config
+  (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
+  :diminish yas-minor-mode
+  :commands (yas-insert-snippet)
+  :hook ((prog-mode
+          nxml-mode
+          html-mode
+          sgml-mode
+          conf-mode
+          snippet-mode) . yas-minor-mode-on)
+  :bind ("C-'" . yas-insert-snippet)
+)
 
-;; (use-package yasnippet-snippets
-;;   :after yasnippet
-;;   :config (yasnippet-snippets-initialize))
+(use-package yasnippet-snippets
+  :after yasnippet
+  :config (yasnippet-snippets-initialize))
 
 (use-package magit
   :bind (("C-x g" . magit-status)
@@ -533,13 +533,13 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :config
   (setq nxml-slash-auto-complete-flag t))
 
-(use-package mhtml-mode
-  :ensure nil
-  :config
-  (add-hook 'mhtml-mode-hook
-            (lambda ()
-              ;; needs `face-remap-add-relative` to be mode specific
-              (face-remap-add-relative 'font-lock-function-name-face nil :foreground "#ffa348"))))
+;; (use-package mhtml-mode
+;;   :ensure nil
+;;   :config
+;;   (add-hook 'mhtml-mode-hook
+;;             (lambda ()
+;;               ;; needs `face-remap-add-relative` to be mode specific
+;;               (face-remap-add-relative 'font-lock-function-name-face nil :foreground "#ffa348"))))
 
 
 ;; # 📁 dired
@@ -990,6 +990,18 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    '("ee0785c299c1d228ed30cf278aab82cf1fa05a2dc122e425044e758203f097d2"
      "6ebdb33507c7db94b28d7787f802f38ac8d2b8cd08506797b3af6cdfd80632e0"
      default))
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(ace-window adwaita-dark-theme all-the-icons-completion
+                all-the-icons-dired all-the-icons-nerd-fonts checkbox
+                company-box csv-mode daemons diminish dired-rainbow
+                dockerfile-mode emojify evil-numbers expand-region
+                fish-mode fringe-helper go-mode god-mode
+                ido-completing-read+ ido-vertical-mode imenu-anywhere
+                lorem-ipsum lsp-ui lua-mode magit meson-mode move-text
+                multiple-cursors nerd-icons-completion olivetti
+                pdf-tools php-mode pkgbuild-mode rainbow-mode ripgrep
+                smex sudo-edit systemd transpose-frame vala-mode vterm
+                windresize yaml-mode yapfify yasnippet
+                yasnippet-snippets ztree))
  '(warning-suppress-log-types '((unlock-file))))
 
