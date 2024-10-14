@@ -276,8 +276,12 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (adwaita-dark-theme-pad-tab-bar t)
   (adwaita-dark-theme-pad-tab-line t)
   :custom-face
-    (font-lock-keyword-face ((t (:foreground "#ffa348" :weight normal))))
-  (font-lock-variable-name-face ((t (:foreground "#78aeed" :weight normal))))
+  (font-lock-keyword-face ((t (:foreground "#ffa348" :weight normal))))
+  ;; these variables influence treesitter highlighting
+  ;; (font-lock-variable-name-face ((t (:foreground "#78aeed" :weight normal))))
+  ;; (font-lock-variable-name-face ((t (:foreground "#78aeed" :weight normal))))
+  (font-lock-function-name-face ((t (:foreground "#7d8ac7" :weight normal))))
+  ;; (font-lock-constant-face ((t (:foreground "#596ab8" :weight normal))))
   (font-lockf-comment-face ((t (:foreground "#656565" :slant italic))))
   (show-paren-match ((t (:background "steelblue3"))))
   :config
@@ -684,6 +688,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (setq markdown-disable-tooltip-prompt t)
   (set-face-attribute 'markdown-header-face-1 nil
                       :height 1.55)
+  ;; treesitter config overrides this, put it back
+  (set-face-foreground 'markdown-header-face-1
+                     (face-foreground 'default))
   (set-face-attribute 'markdown-header-face-2 nil
                       :height 1.2)
   (set-face-attribute 'markdown-header-face-3 nil
