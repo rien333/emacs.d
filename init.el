@@ -570,13 +570,15 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :config
   (setq nxml-slash-auto-complete-flag t))
 
-;; (use-package mhtml-mode
-;;   :ensure nil
-;;   :config
-;;   (add-hook 'mhtml-mode-hook
-;;             (lambda ()
-;;               ;; needs `face-remap-add-relative` to be mode specific
-;;               (face-remap-add-relative 'font-lock-function-name-face nil :foreground "#ffa348"))))
+;; maybe fix this with treesitter instead?
+(use-package mhtml-mode
+  :ensure nil
+  :config
+  (add-hook 'mhtml-mode-hook
+            (lambda ()
+              ;; needs `face-remap-add-relative` to be mode specific
+              (face-remap-add-relative 'font-lock-function-name-face nil :foreground "#ffa348")))
+  :mode ("\\.html\\'" . latex-mode))
 
 
 ;; # 📁 dired
