@@ -1031,6 +1031,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("k" . previous-line)
         ("j" . next-line)))
 
+;; (use-package reveal-in-folder
+;;   :commands (reveal-in-folder reveal-in-folder-this-buffer reveal-in-folder-at-point))
+
 ;; # TODO
 ;; Stuff that is good to save, but needs to be looked at
 
