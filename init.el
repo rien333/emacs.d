@@ -44,9 +44,17 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 (global-hl-line-mode 1)
 (savehist-mode t)
 
+;; #  emacs
 (use-package emacs
   :config
-  ;; # 📔 Global functions
+  ;; context-menu stuff
+  (add-hook 'text-mode-hook 'context-menu-mode)
+  (add-hook 'shell-mode-hook 'context-menu-mode)
+  (add-hook 'prog-mode-hook 'context-menu-mode)
+  (add-hook 'dired-mode-hook 'context-menu-mode)
+
+   
+   ;; # 📔 Global functions
   (add-hook 'emacs-lisp-mode-hook
             (lambda ()
               (setq-local imenu-generic-expression
