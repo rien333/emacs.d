@@ -34,9 +34,6 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 ;; #  UI
 ;; (xterm-mouse-mode 1) ;; only needed for terminal
 (pixel-scroll-precision-mode)
-;; (setq-default frame-title-format '("%b - Emacs"))
-;; doesn't work, annoyingly
-;; (setq-default frame-title-format '((:eval (string-replace "" "  " "%b")) "- Emacs "))
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
