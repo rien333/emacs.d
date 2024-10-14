@@ -471,6 +471,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :init
   (setq lsp-keymap-prefix "C-c l")
   :config
+  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
+  (setq lsp-keymap-prefix "C-c l")
   ;; disable some distractions
   (setq lsp-lens-enable nil
         lsp-headerline-breadcrumb-enable nil
@@ -487,18 +489,33 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         lsp-pyls-plugins-pyflakes-enabled nil
         lsp-pylsp-plugins-flake8-enabled nil
         lsp-ruff-lsp-log-level "off")
-  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
-  :bind-keymap
-  ("C-c l" . lsp-command-map)
-  :bind (:map lsp-mode-map ("M-p" . nil))
+  :bind (:map lsp-mode-map
+              ("M-p" . nil)
+              ;; to use lsp context menu even with `context-menu-mode` enabled
+              ("<down-mouse-3>" . lsp-mouse-click))
   :hook
-  ((python-mode . lsp)
-   ;; (python-ts-mode . lsp)
+  ;; override default prefix
+  ((lsp-mode . (lambda ()
+                      (let ((lsp-keymap-prefix "C-c l"))
+                        (lsp-enable-which-key-integration))))
+   (python-mode . lsp)
+   (python-ts-mode . lsp)
+   (go-mode . lsp)
    (nxml-mode . lsp)
    (vala-mode . lsp)
-   (c-mode . lsp)))
+   (c-mode . lsp))
+   (c-ts-mode . lsp))
 
 (use-package lsp-ui :after (lsp-mode))
+
+(use-package python-ts-mode
+  :ensure nil
+  :interpreter ("python" . python-ts-mode)
+  :mode (("\\.py\\'" . python-ts-mode)))
+
+(use-package go-mode
+  :mode (("\\.go\\'" . go-mode))
+)
 
 (use-package recentf
   :ensure nil
