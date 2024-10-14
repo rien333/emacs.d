@@ -1026,6 +1026,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("k" . previous-line)
         ("j" . next-line)))
 
+
 ;; # TODO
 ;; Stuff that is good to save, but needs to be looked at
 
@@ -1040,7 +1041,6 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 ;;    (concat my-markdown-command " " fn " & ") nil 0))
 
 ;; # 🔨 customized settings
-
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1061,13 +1061,13 @@ read-process-output-max (* 1024 1024)) ;; 1mb
                 all-the-icons-dired all-the-icons-nerd-fonts checkbox
                 company-box csv-mode daemons diminish dired-rainbow
                 dockerfile-mode emojify evil-numbers expand-region
-                fish-mode fringe-helper go-mode god-mode
+                fish-mode fringe-helper go-mode god-mode idlwave
                 ido-completing-read+ ido-vertical-mode imenu-anywhere
                 lorem-ipsum lsp-ui lua-mode magit meson-mode move-text
                 multiple-cursors nerd-icons-completion olivetti
-                pdf-tools php-mode pkgbuild-mode rainbow-mode ripgrep
-                smex sudo-edit systemd transpose-frame vala-mode vterm
-                windresize yaml-mode yapfify yasnippet
-                yasnippet-snippets ztree))
+                pacfiles-mode pdf-tools php-mode pkgbuild-mode po-mode
+                pug-mode rainbow-mode ripgrep smex sudo-edit systemd
+                transpose-frame vala-mode vterm windresize yaml-mode
+                yapfify yasnippet-snippets ztree))
  '(warning-suppress-log-types '((unlock-file))))
 
