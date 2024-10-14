@@ -89,7 +89,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
     (interactive)
     (when (region-active-p)
       (let* ((input-text (buffer-substring-no-properties (region-beginning) (region-end)))
-             (command (format "pandoc -s -f markdown -t html -V colorlinks=true -V linkcolor=blue -V urlcolor=blue  2> /dev/null --highlight-style pygments | cat ~/.emacs.d/pandoc.html - (echo \"</html>\" | psub) | wl-copy -t text/html")))
+             (command (format "pandoc --embed-resources -s -f markdown -t html -V colorlinks=true -V linkcolor=blue -V urlcolor=blue --highlight-style pygments  2> /dev/null | wl-copy -t text/html")))
         (shell-command-on-region (region-beginning) (region-end) command nil nil "*pandoc-output*")
         (message "Copied rich text to clipboard"))))
 
