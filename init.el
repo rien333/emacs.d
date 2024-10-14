@@ -672,6 +672,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 (use-package markdown-mode
   :custom
   (markdown-header-scaling t)
+  (markdown-hide-urls t)
   :init
   (defun inline-markdown-comment (&optional arg)
     (interactive "*P")
@@ -694,10 +695,19 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   "Return t if point is in comment or markdown comment."
   (or (apply orig-fun args)
       (eq (get-text-property (point) 'face) 'markdown-comment-face)))
-
   (advice-add 'er--point-is-in-comment-p :around #'my-advice--point-is-in-comment-p)
-
   :config
+  (defun context-menu-markdown-toggle-markup (menu click)
+    "Populate MENU with command to toggle markdown markup"
+    (save-excursion
+      (define-key-after menu [highlight-search-mouse]
+        '(menu-item "Toggle Markup Hiding" markdown-toggle-markup-hiding
+                    :style radio
+                    :help "Hide/show markdown markup"
+                    :selected markdown-hide-markup)))
+    menu)
+  ;; replace ∞ by …
+  (setq markdown-url-compose-char '(8230 8943 35 9733 9875))
   (setq markdown-fontify-code-blocks-natively t)
   (setq markdown-add-footnotes-to-imenu nil)
   (setq markdown-italic-underscore t)
@@ -717,8 +727,19 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("<backtab>". un-indent-by-removing-2-spaces)
         ("M-p". nil)
         ("C-c C-c". nil)
+        ("C-M-n" . markdown-forward-block)
+        ("C-M-p" . markdown-backward-block)
+        ("C-c C-s I" . markdown-insert-image)
+        ("C-c C-s ~" . markdown-insert-strike-through)
+        ("C-c RET" . markdown-toggle-markup-hiding)
+        ("C-c m" . markdown-toggle-markup-hiding)
         ("M-p c" . inline-markdown-comment)
         ("M-p ;" . inline-markdown-comment))
+  :hook
+  (markdown-mode . (lambda ()
+                         (add-hook 'context-menu-functions
+                                   #'context-menu-markdown-toggle-markup
+                                   nil t)))
   :mode
   (("\\.md\\'" . markdown-mode)
    ("\\.markdown\\'" . markdown-mode)))
