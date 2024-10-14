@@ -765,25 +765,24 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 
 ;; #   vterm
 (use-package vterm
-  :unless (memq window-system '(ns w32))  ;; windows+vterm is wonky
-  :init
-  (defun vterm-new-window (arg)
-    "Open a new vterm in a split window."
-    (interactive "P")
-    (split-window-sensibly)
-    (other-window 1)
-    (vterm arg))
-  (setq-local kill-buffer-query-functions nil) ;; always kill vterm buffers
   :hook
   (vterm-mode . (lambda ()
                   (setq-local global-hl-line-mode nil)
                   (text-scale-decrease 1)
+                  ;; (with-editor-export-editor) ;; nice but really slow
                   (setq-local show-paren-mode nil)))
   :config
+  (defun vterm-new-window (arg)
+    "Open a new vterm in a split window"
+    (interactive "P")
+    (split-window-sensibly)
+    (other-window 1)
+    (vterm arg))
   (diminish 'vterm-copy-mode
           '(:propertize " VTermCopy" face '(:weight bold)))
   (setq vterm-buffer-name-string "vterm %s")
   (setq vterm-shell "/bin/fish")
+  (setq vterm-tramp-shells '(("scp" "/bin/fish") ("ssh" "/bin/fish") ("docker" "/bin/sh")))
   (setq vterm-eval-cmds
     '(("find-file" find-file)
       ("sudo-edit" sudo-edit)
@@ -809,19 +808,15 @@ read-process-output-max (* 1024 1024)) ;; 1mb
                     (vterm-copy-mode)
                     (isearch-backward)))
          ("C-;" . (lambda () (interactive)
-                    (avy-goto-char-timer)
-                    (vterm-copy-mode)))
+                    (vterm-copy-mode)
+                    (avy-goto-char-1)))
          ("C-_" . nil)
          ("C-u" . vterm--self-insert)
          ("M->" . end-of-buffer)
          :map vterm-copy-mode-map
-         ("q" . (lambda () (interactive)
-                  (when (use-region-p)
-                    (kill-ring-save (region-beginning)
-                                    (region-end)))
-                  (vterm-copy-mode -1)))
-         )
-)
+         ("q" . vterm-copy-mode-done)
+         ("<escape>" . vterm-copy-mode-done))
+  )
 
 (use-package pdf-tools
   :init
@@ -1030,9 +1025,6 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("l" . forward-char)
         ("k" . previous-line)
         ("j" . next-line)))
-
-;; (use-package reveal-in-folder
-;;   :commands (reveal-in-folder reveal-in-folder-this-buffer reveal-in-folder-at-point))
 
 ;; # TODO
 ;; Stuff that is good to save, but needs to be looked at
