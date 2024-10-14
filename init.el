@@ -380,7 +380,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :defer ;; fucks with startup time otherwhise
   :config
   (ido-ubiquitous-mode)
-  (setq ido-cr+-max-items 50000))
+  (setq ido-cr+-max-items 60000))
 
 (use-package smex
   :bind
