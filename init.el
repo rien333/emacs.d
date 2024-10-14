@@ -165,17 +165,22 @@ read-process-output-max (* 1024 1024)) ;; 1mb
       (apply fun args)))
   
   (advice-add 'keyboard-escape-quit :around #'my-keyboard-escape-quit)
-  
+
   (setq-default major-mode 'shell-script-mode
                 indent-tabs-mode nil
                 tab-width 4
                 frame-title-format '("   %b")
                 initial-major-mode 'markdown-mode)
+  ;; treesitter syntax depth
+  (setopt treesit-font-lock-level 5)
   ;; # 👱🏼 variables
   (setq tramp-allow-unsafe-temporary-files t
+        ;; treesitter
+        major-mode-remap-alist '((python-mode . python-ts-mode))
         blink-cursor-mode nil
         disabled-command-function nil ;; emacs disables some commands by default; don't.
         delete-pair-blink-delay 0
+        auto-save-default nil
         vc-ignore-dir-regexp
         (format "\\(%s\\)\\|\\(%s\\)"
                 vc-ignore-dir-regexp
@@ -185,6 +190,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         pgtk-use-im-context-on-new-connection nil ;; fixes S-SPC
         native-comp-async-report-warnings-errors nil
         native-comp-compiler-options '("-O2" "-march=znver4")
+        context-menu-functions '(context-menu-local
+                                 context-menu-middle-separator occur-context-menu
+                                 context-menu-ffap context-menu-buffers)
         epa-pinentry-mode 'loopback
         large-file-warning-threshold 700000000
         display-time-default-load-average nil
