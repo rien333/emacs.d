@@ -606,11 +606,18 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (dired-directory
    ((t (:foreground "#6cb2eb" :weight bold))))
   :bind
-  (("C-x C-d" . dired))
+  (("C-x C-d" . dired-jump)
+   ("C-x d" . dired-jump))
   (:map dired-mode-map
         ("j" . dired-next-dirline)
         ("k" . dired-prev-dirline)
         ("l" . dired-find-file)
+        ("W" . (lambda () (interactive)
+                    (let ((current-prefix-arg 0))
+                             (call-interactively 'dired-copy-filename-as-kill))))
+        ;; ("y" . (lambda () (interative)
+        ;;          (let ((current-prefix-arg 0))
+        ;;                     (call-interactively 'dired-copy-filename-as-kill))))
         ("h" . dired-up-directory)
         ("H" . dired-up-directory)
         ("DEL" . dired-up-directory)
