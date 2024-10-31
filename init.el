@@ -163,6 +163,16 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (defun my-keyboard-escape-quit (fun &rest args)
     (cl-letf (((symbol-function 'one-window-p) (lambda (&rest _) t)))
       (apply fun args)))
+
+  (defun copy-buffer-file-name ()
+  "Copy the full path to the current file in the minibuffer."
+  (interactive)
+  (let ((file-name (buffer-file-name)))
+    (if file-name
+        (progn
+          (message "Copied %s" file-name)
+          (kill-new file-name))
+      (error "Buffer not visiting a file"))))
   
   (advice-add 'keyboard-escape-quit :around #'my-keyboard-escape-quit)
 
@@ -221,10 +231,17 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    ("M-\"" . insert-pair)
    ("C-x k" . kill-current-buffer)
    ("C-x C-k" . kill-current-buffer)
+   ("C-x y" . copy-buffer-file-name)
+   ("C-x C-y" . copy-buffer-file-name)
    ("C-c w" . copy-word)
    ("C-c l" . copy-line)
    ("C-x \~" . (lambda () (interactive)
-                (let ((default-directory "~")) (ido-find-file))))
+                 (let ((default-directory "~")) (ido-find-file))))
+   ;; makes current window "dedicated" to its buffer
+   ;; make this a toggle
+   ("C-x 4 d" . (lambda () (interactive)
+                  (message (concat "Dedicated window to buffer " (buffer-name)))
+                  (set-window-dedicated-p nil "dedicated")))
    ("C-x C-S-f" . find-file-other-window)
    ("M-?" . nil)
    ("C-z" . nil)
