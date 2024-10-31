@@ -595,7 +595,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
             (lambda ()
               ;; needs `face-remap-add-relative` to be mode specific
               (face-remap-add-relative 'font-lock-function-name-face nil :foreground "#ffa348")))
-  :mode ("\\.html\\'" . latex-mode))
+  :mode ("\\.html\\'" . mhtml-mode))
 
 
 ;; # 📁 dired
