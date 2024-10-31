@@ -520,8 +520,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    (go-mode . lsp)
    (nxml-mode . lsp)
    (vala-mode . lsp)
-   (c-mode . lsp))
-   (c-ts-mode . lsp))
+   (c-mode . lsp)
+   (c-ts-mode . lsp)))
 
 (use-package lsp-ui :after (lsp-mode))
 
@@ -743,6 +743,10 @@ read-process-output-max (* 1024 1024)) ;; 1mb
                       :height 1.55)
   ;; treesitter config overrides this, put it back
   (set-face-foreground 'markdown-header-face-1
+                     (face-foreground 'default))
+  (set-face-foreground 'markdown-header-face-2
+                       (face-foreground 'default))
+  (set-face-foreground 'markdown-header-face-3
                      (face-foreground 'default))
   (set-face-attribute 'markdown-header-face-2 nil
                       :height 1.2)
@@ -1019,8 +1023,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    ("<tab-bar> <wheel-up>" . nil)
    ("<tab-bar> <wheel-down>" . nil)
    ("H-w" . tab-bar-close-tab)
-   ("H-<" . tab-next)
-   ("H->" . tab-previous)
+   ("H-<" . tab-previous)
+   ("H->" . tab-next)
    ("H-K" . tab-next)
    ("H-J" . tab-previous)
    ("<mouse-9>" . tab-next)
