@@ -525,10 +525,41 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 
 (use-package lsp-ui :after (lsp-mode))
 
+(use-package python-pytest
+  :commands (python-pytest-dispatch)
+  :config
+  ;; remove some commands from transient
+  (transient-remove-suffix 'python-pytest-dispatch '(1))
+  (transient-remove-suffix 'python-pytest-dispatch '(-2))
+  (transient-remove-suffix 'python-pytest-dispatch "--tr")
+  (transient-remove-suffix 'python-pytest-dispatch "--rx")
+  :bind (:map python-pytest-finished-mode-map
+              ("p" . compilation-previous-error)
+              ("n" . compilation-next-error)
+              ("M-p" . (lambda () (interactive)
+                         (previous-error-no-select 1)))
+              ("M-n" . (lambda () (interactive)
+                         (next-error-no-select 1)))
+              ;; show error "in other window"
+              ("o" . compilation-display-error)
+              )
+  )
+
 (use-package python-ts-mode
   :ensure nil
   :interpreter ("python" . python-ts-mode)
-  :mode (("\\.py\\'" . python-ts-mode)))
+  :mode (("\\.py\\'" . python-ts-mode))
+  :hook
+  ;; bind key to pytest.el in hook, to avoid issue with `:bind`:
+  (python-ts-mode . (lambda ()
+                      (define-key python-ts-mode-map
+                                  (kbd "C-c t") #'python-pytest-dispatch)
+                      (define-key python-ts-mode-map (kbd "C-c C-t") #'python-pytest-dispatch)
+                      )
+                  )
+  )
+
+
 
 (use-package go-mode
   :mode (("\\.go\\'" . go-mode))
