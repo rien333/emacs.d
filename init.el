@@ -347,6 +347,18 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ido-everywhere t)
   (ido-mode))
 
+(use-package compilation
+  :ensure nil
+  :bind (:map compilation-mode-map
+              ("p" . compilation-previous-error)
+              ("n" . compilation-next-error)
+              ("M-p" . (lambda () (interactive)
+                         (previous-error-no-select 1)))
+              ("M-n" . (lambda () (interactive)
+                         (next-error-no-select 1)))
+              )
+  )
+
 (use-package ido-vertical-mode
   :after (ido)
   :config
@@ -429,9 +441,18 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :mode ("\\.lua\\'" . lua-mode)
   :interpreter "lua")
 
+;; color compile buffers (e.g. those in PKGBUILD mode)
+(use-package ansi-color :hook (compilation-filter . ansi-color-compilation-filter))
+
 (use-package pkgbuild-mode
   :hook
   ((pkgbuild-mode . (lambda () (flymake-mode -1))))
+  :config
+  (setq pkgbuild-makepkg-command "yes | makepkg -sirf")
+  :bind
+  (:map pkgbuild-mode-map
+   ("C-c C-c" . compile)
+   )
   :mode
   ("\\PKGBUILD\\'" . pkgbuild-mode))
 
