@@ -1171,13 +1171,14 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    '(ace-window adwaita-dark-theme all-the-icons-completion
                 all-the-icons-dired all-the-icons-nerd-fonts checkbox
                 company-box csv-mode daemons diminish dired-rainbow
-                dockerfile-mode emojify evil-numbers expand-region
-                fish-mode fringe-helper go-mode god-mode idlwave
-                ido-completing-read+ ido-vertical-mode imenu-anywhere
-                lorem-ipsum lsp-ui lua-mode magit meson-mode move-text
-                multiple-cursors nerd-icons-completion olivetti
-                pacfiles-mode pdf-tools php-mode pkgbuild-mode po-mode
-                pug-mode rainbow-mode ripgrep smex sudo-edit systemd
+                dockerfile-mode emojify evil evil-numbers
+                expand-region fish-mode fringe-helper go-mode god-mode
+                goto-chg idlwave ido-completing-read+
+                ido-vertical-mode imenu-anywhere lorem-ipsum lsp-ui
+                lua-mode magit meson-mode move-text multiple-cursors
+                nerd-icons-completion olivetti pacfiles-mode pdf-tools
+                php-mode pkgbuild-mode po-mode pug-mode python-pytest
+                rainbow-mode ripgrep smex sudo-edit systemd
                 transpose-frame vala-mode vterm windresize yaml-mode
                 yapfify yasnippet-snippets ztree))
  '(warning-suppress-log-types '((unlock-file))))
