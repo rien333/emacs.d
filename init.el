@@ -870,6 +870,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
          ("<escape>" . vterm-copy-mode-done))
   )
 
+;; # 📔 pdf-tools
 (use-package pdf-tools
   :init
   (defun pdf-highlight-blue ()
@@ -880,6 +881,62 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (("\\.pdf" . pdf-view-mode))
   :magic ("%PDF" . pdf-view-mode)
   :config
+  (defun delete-current-page ()
+    (interactive)
+    (setq page-number (pdf-view-current-page))
+    (let ((start (- page-number 1))
+          (end (+ page-number 1))
+          (pdf (buffer-file-name)))
+      (cond
+       ((eq page-number 1)
+        (setq qpdf-command (format
+                            "qpdf \"%s\" --replace-input --pages /tmp/redacted.pdf 1 \"%s\" 2-z --"
+                            pdf pdf)))
+       ;; case for handling deletion of the last page
+       ((eq page-number (pdf-cache-number-of-pages))
+        (setq qpdf-command (format
+                            "qpdf \"%s\" --replace-input --pages \"%s\" 1-%d /tmp/redacted.pdf --"
+                            pdf pdf start)))
+       ;; base case
+       (t
+        (setq qpdf-command (format
+                            "qpdf \"%s\" --replace-input --pages \"%s\" 1-%d /tmp/redacted.pdf 1 \"%s\" %d-z --"
+                            pdf pdf start pdf end)))))
+    (call-process-shell-command qpdf-command nil 0)
+    )
+
+  (defun process-csv-field ()
+    "Perform an action based on the csv field at point."
+    (interactive)
+    ;; switch to csv buffer
+    (other-window -1)
+    (let ((word (thing-at-point 'sexp t)))
+      (cond
+       ;; word ends with ".pdf"
+       ((string-match-p "\\.pdf\\'" word)
+        ;; kill current pdf to save memory 
+        (other-window -1)
+        (kill-current-buffer)
+        ;; jump back to csv buffer
+        (other-window -1)
+        (forward-sexp)
+        (setq new-page (string-to-number (thing-at-point 'sexp t)))
+        (insert "*")
+        (forward-sexp)
+        ;; switch to pdf window with new document
+        (find-file-other-window word)
+        (pdf-view-goto-page new-page))
+       ;; word is an integer
+       ((string-match-p "^[0-9]+" word)
+        (insert "*")
+        (forward-sexp)
+        (other-window -1)
+        (pdf-view-goto-page (string-to-number word)))))
+    )
+
+  (defun restore-current-page ()
+    ;; restore page from redacted folder
+    )
   (pdf-tools-install :no-query)
   (setq pdf-cache-prefetch-delay 0.1
         pdf-cache-image-limit 128
@@ -922,7 +979,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("S-SPC" . pdf-view-scroll-down-or-previous-page)
         ("TAB" . ido-imenu-anywhere)
         ("/" . isearch-forward)
-        ("n" . nil)
+        ;; ("n" . nil)
+        ("d" . delete-current-page)
+        ("n" . process-csv-field)
         ("p" . nil)
         ("!" . pdf-view-midnight-minor-mode)
         ("m" . pdf-annot-add-highlight-markup-annotation)
