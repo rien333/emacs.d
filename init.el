@@ -56,30 +56,6 @@ read-process-output-max (* 1024 1024)) ;; 1mb
             (lambda ()
               (setq-local imenu-generic-expression
                           '((nil ";; # \\(.*\\)" 1)))))
-  (defun copy-thing (begin-of-thing end-of-thing &optional arg)
-    "copy thing between beg & end into kill ring"
-    (save-excursion
-      (let ((beg (get-point begin-of-thing 1))
-            (end (get-point end-of-thing arg)))
-        (shell-command
-         (concat "echo -n '" (buffer-substring beg end) "' | xsel -b")))))
-
-  (defun get-point (symbol &optional arg)
-    "get the point"
-    (funcall symbol arg)
-    (point))
-
-  (defun copy-word (&optional arg)
-    "Copy words at point into kill-ring"
-    (interactive "P")
-    (copy-thing 'forward-word 'backward-word arg)
-    (message "Copied word"))
-
-  (defun copy-line (&optional arg)
-    "Save current line into Kill-Ring without mark the line"
-    (interactive "P")
-    (copy-thing 'beginning-of-line 'end-of-line arg)
-    (message "Copied line"))
 
   (defun markdown-to-rich-text ()
     "Convert markdown to rich text, and put it in clipboard"
@@ -176,6 +152,10 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   
   (advice-add 'keyboard-escape-quit :around #'my-keyboard-escape-quit)
 
+  ;; This is what the dev recommends
+  (with-eval-after-load 'transient
+    (transient-bind-q-to-quit))
+
   (setq-default major-mode 'shell-script-mode
                 indent-tabs-mode nil
                 tab-width 4
@@ -233,8 +213,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    ("C-x C-k" . kill-current-buffer)
    ("C-x y" . copy-buffer-file-name)
    ("C-x C-y" . copy-buffer-file-name)
-   ("C-c w" . copy-word)
-   ("C-c l" . copy-line)
+   ("C-x R" . revert-buffer-quick)
    ("C-x \~" . (lambda () (interactive)
                  (let ((default-directory "~")) (ido-find-file))))
    ;; makes current window "dedicated" to its buffer
