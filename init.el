@@ -502,6 +502,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         lsp-inhibit-message t
         lsp-auto-guess-root t
         lsp-modeline-workspace-status-enable nil
+        lsp-pyls-plugins-pycodestyle-enabled t
+        lsp-pyls-plugins-pyflakes-enabled nil
+        lsp-pylsp-plugins-flake8-enabled nil
         lsp-ruff-lsp-log-level "off")
   ;; believe it or not, but this makes pylsp over tramp work more consistently (at least atm)
   (lsp-toggle-trace-io)
