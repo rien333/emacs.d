@@ -351,9 +351,6 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ;; jump back to csv buffer
         (other-window -1)
         (forward-sexp)
-        (setq new-page (string-to-number (thing-at-point 'sexp t)))
-        (insert "*")
-        (forward-sexp)
         ;; switch to pdf window with new document
         (find-file-other-window cur_word)
         (pdf-view-goto-page new-page))
@@ -363,7 +360,17 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         (forward-sexp)
         (let ((next_word (thing-at-point 'sexp t)))
           (other-window -1)
-          (pdf-view-goto-page (string-to-number next_word))))))
+          (cond
+           ((string-match-p "^[0-9]+" next_word)
+            (pdf-view-goto-page (string-to-number next_word)))
+           ((string-match-p "\\.pdf\\'" next_word)
+             (kill-current-buffer)
+           (other-window -1)
+           (forward-sexp)
+           (setq new-page (string-to-number (thing-at-point 'sexp t)))
+           (find-file-other-window next_word)
+           (pdf-view-goto-page new-page)
+           ))))))
     )
 
   (defun process-csv-field-asterisk ()
