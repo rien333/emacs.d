@@ -17,6 +17,14 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 (pixel-scroll-precision-mode)
 (tool-bar-mode -1)
 
+;; modeline
+(setq-default mode-line-format
+              '((:eval (when (file-remote-p default-directory)
+                         "tramp:"))
+                (:eval (propertize "%b" 'face 'bold))
+                (:eval (if (buffer-modified-p) "*" " ")) "   "
+                mode-line-position mode-line-read-only-help-echo "  " mode-line-modes))
+
 (use-package emacs
   :config
 
