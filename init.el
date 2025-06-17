@@ -1,4 +1,5 @@
-;; use more memory (LSP recommendations)
+;-*- lexical-binding: t; -*-
+;; use more memory (LSP recommendations) 
 (setq gc-cons-threshold 100000000
 read-process-output-max (* 1024 1024)) ;; 1mb
 
@@ -56,15 +57,6 @@ read-process-output-max (* 1024 1024)) ;; 1mb
             (lambda ()
               (setq-local imenu-generic-expression
                           '((nil ";; # \\(.*\\)" 1)))))
-
-  (defun markdown-to-rich-text ()
-    "Convert markdown to rich text, and put it in clipboard"
-    (interactive)
-    (when (region-active-p)
-      (let* ((input-text (buffer-substring-no-properties (region-beginning) (region-end)))
-             (command (format "pandoc --embed-resources -s -f markdown -t html -V colorlinks=true -V linkcolor=blue -V urlcolor=blue --highlight-style pygments  2> /dev/null | wl-copy -t text/html")))
-        (shell-command-on-region (region-beginning) (region-end) command nil nil "*pandoc-output*")
-        (message "Copied rich text to clipboard"))))
 
   (defun kill-current-buffer ()
     "kill current buffer without prompt"
@@ -197,7 +189,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         parens-require-spaces nil ;; pairs do not need extra spaces
         ;; store all backup and autosave files in the tmp dir
         backup-directory-alist `((".*" . ,temporary-file-directory))
-        auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
+        ;; this produced overly long filenames, apperently
+        ;; auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
+        )
   :bind
   ;; # ⌨ global binds
   (("M-\"" . insert-double-quotes)
@@ -222,8 +216,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
                   (message (concat "Dedicated window to buffer " (buffer-name)))
                   (set-window-dedicated-p nil "dedicated")))
    ("C-x C-S-f" . find-file-other-window)
+   ("C-x C-S-b" . ido-switch-buffer-other-window)
    ("M-?" . nil)
-   ("C-z" . nil)
    ("M-;" . comment-or-uncomment-region-or-line)
    ("M-D" . duplicate-current-line-or-region)
    ("M-g" . goto-line)
@@ -237,6 +231,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    ("H--" . text-scale-decrease)
    ("C-x C-w" . whitespace-mode)
    ("M-i" . insert-char)
+   ("C-z" . nil) ; Don't  quit by accident with ctrl+z
    ("C-x C-Z" . nil) ; Don't  quit by accident with ctrl+z
    ("M-<mouse-3>" . mouse-buffer-menu)
    ("<mouse-2>" . yank) ; yank with middle
@@ -256,6 +251,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    ("C-x <right>" . windmove-right)
    ("C-x <up>" . windmove-up)
    ("C-x <down>" . windmove-down)
+   ("<mouse-9>" . next-buffer)
+   ("<mouse-8>" . previous-buffer)
    ("C-x 0" . delete-window))
 )
 
@@ -345,7 +342,24 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (setq ido-enable-flex-matching t
         ido-create-new-buffer 'always ;; skip asking
         ido-everywhere t)
-  (ido-mode))
+  (ido-mode)
+  (defun ido-open-vterm ()
+  "Open `vterm' in the directory under point in the Ido completion session."
+  (interactive)
+  (if (memq ido-cur-item '(file dir))
+      (let ((dir (if (file-directory-p ido-current-directory)
+                     ido-current-directory
+                   (file-name-directory ido-current-directory))))
+        (setq ido-exit 'vterm)
+        (exit-minibuffer)
+        (let ((default-directory dir))
+          (vterm)))
+    (message "Not a valid directory to open vterm.")))
+
+  ;; doesn't work but oh well
+  (define-key ido-common-completion-map (kbd "M-v") #'ido-open-vterm)
+
+  )
 
 (use-package compilation
   :ensure nil
@@ -405,6 +419,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :defer 2 ;; fixes LSP; yas needs to be loaded
   :config
   (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
+  (setq yas-wrap-around-region t)
   :diminish yas-minor-mode
   :commands (yas-insert-snippet)
   :hook ((prog-mode
@@ -435,7 +450,10 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :mode ("\\.csv\\'" . csv-mode)
   :hook (csv-mode . csv-align-mode)
   :config
-  (setq csv-align-max-width 70))
+  (setq csv-align-max-width 70
+        csv-align-padding 2
+        csv-field-quotes '("\"" "~"))
+  (csv-header-line))
 
 (use-package lua-mode
   :mode ("\\.lua\\'" . lua-mode)
@@ -448,7 +466,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :hook
   ((pkgbuild-mode . (lambda () (flymake-mode -1))))
   :config
-  (setq pkgbuild-makepkg-command "yes | makepkg -sirf")
+  (setq pkgbuild-makepkg-command "updpkgsums; yes | makepkg -sirf")
   :bind
   (:map pkgbuild-mode-map
    ("C-c C-c" . compile)
@@ -523,6 +541,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    (nxml-mode . lsp)
    (vala-mode . lsp)
    (c-mode . lsp)
+   (c++-mode . lsp)
    (c-ts-mode . lsp)))
 
 (use-package lsp-ui :after (lsp-mode))
@@ -551,6 +570,10 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   :ensure nil
   :interpreter ("python" . python-ts-mode)
   :mode (("\\.py\\'" . python-ts-mode))
+  :init
+  ;; disable warning on python 3.13, which implements a new REPL
+  (setenv "PYTHON_BASIC_REPL" "1")
+  (setq python-shell-interpreter-args "-i -q")
   :hook
   ;; bind key to pytest.el in hook, to avoid issue with `:bind`:
   (python-ts-mode . (lambda ()
@@ -603,6 +626,10 @@ read-process-output-max (* 1024 1024)) ;; 1mb
                nil))
   (setq-default nxml-child-indent 4 nxml-attribute-indent 4
                 nxml-outline-child-indent 4)
+  ;; Yas+lsp is kind of weird in xml mode?
+  ;; at least, I don't get how to make 
+  (setq-local lsp-enable-snippet nil)
+
   :mode
   (("\\.xsd\\'" . nxml-mode)
    ("\\.xml\\'" . nxml-mode))
@@ -628,6 +655,26 @@ read-process-output-max (* 1024 1024)) ;; 1mb
             (lambda ()
               ;; needs `face-remap-add-relative` to be mode specific
               (face-remap-add-relative 'font-lock-function-name-face nil :foreground "#ffa348")))
+  (defun html-down-element ()
+    "Move to the next closing '>' of an HTML tag on the same line."
+    (interactive)
+    (when (search-forward ">" (line-end-position) t)
+      (goto-char (point))))
+  (defun sgml-tag-with-help ()
+    "sgml-tag, but with a help message."
+    (interactive)
+    (run-at-time 0.1 nil #'minibuffer-message
+             (propertize "<C-j> to finish the tag"
+                         'face 'font-lock-builtin-face))
+    (sgml-tag))
+  :bind
+  (:map mhtml-mode-map
+        ("C-M-f" . sgml-skip-tag-forward)
+        ("C-M-b" . sgml-skip-tag-backward)
+        ("C-M-i" . html-down-element)
+        ("C-c o" . sgml-tag-with-help)
+        ("C-c C-s" . sgml-tag-with-help)
+        )
   :mode ("\\.html\\'" . mhtml-mode))
 
 
@@ -674,6 +721,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("/" . isearch-forward)
         ("O" . dired-open-file)
         ("C-c C-t" . dired-toggle-read-only)
+        ("C-c t" . dired-toggle-read-only)
+        ("C-c e" . dired-toggle-read-only)
+        ("<escape>" . dired-toggle-read-only)
         ("<mouse-1>" . dired-find-file)
         ("<mouse-3>" . dired-mouse-find-file-other-window)
         ("<mouse-2>" . dired-find-file)))
@@ -765,6 +815,29 @@ read-process-output-max (* 1024 1024)) ;; 1mb
                     :help "Hide/show markdown markup"
                     :selected markdown-hide-markup)))
     menu)
+  (defun markdown-to-rich-text ()
+    "Convert markdown to rich text, and put it in clipboard"
+    (interactive)
+    (when (region-active-p)
+      (let* ((input-text (buffer-substring-no-properties (region-beginning) (region-end)))
+             (command (format "pandoc --embed-resources -s -f markdown -t html -V colorlinks=true -V linkcolor=blue -V urlcolor=blue --highlight-style pygments  2> /dev/null | wl-copy -t text/html")))
+        (shell-command-on-region (region-beginning) (region-end) command nil nil "*pandoc-output*")
+        (message "Copied rich text to clipboard"))))
+  (defun markdown-export ()
+      "Run Pandoc on the current buffer's file, converting it to PDF"
+  (interactive)
+  (save-buffer)
+  (if (not (buffer-file-name))
+      (message "Pandoc export: buffer is not visiting a file!")
+    (let* ((infile (file-relative-name (buffer-file-name)))
+           (outfile (concat (file-name-sans-extension infile) ".pdf"))
+           (default-command (format "pandoc \"%s\" -o \"%s\" --template RAR &" infile outfile))
+           (command (read-shell-command "Pandoc command: " default-command)))
+      (call-process-shell-command command nil nil 0))))
+
+;; (global-set-key (kbd "C-c p") 'my-pandoc-convert)  ;; Optional keybinding
+
+  
   ;; replace ∞ by …
   (setq markdown-url-compose-char '(8230 8943 35 9733 9875))
   (setq markdown-fontify-code-blocks-natively t)
@@ -772,6 +845,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (setq markdown-italic-underscore t)
   (setq markdown-asymmetric-header t)
   (setq markdown-disable-tooltip-prompt t)
+  
   (set-face-attribute 'markdown-header-face-1 nil
                       :height 1.55)
   ;; treesitter config overrides this, put it back
@@ -790,6 +864,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("<backtab>". un-indent-by-removing-2-spaces)
         ("M-p". nil)
         ("C-c C-c". nil)
+        ("C-c c". markdown-export)
+        ("C-c e" . markdown-edit-code-block)
+        ("C-c C-e" . markdown-edit-code-block)
         ("C-M-n" . markdown-forward-block)
         ("C-M-p" . markdown-backward-block)
         ("C-c C-s I" . markdown-insert-image)
@@ -832,6 +909,13 @@ read-process-output-max (* 1024 1024)) ;; 1mb
     (split-window-sensibly)
     (other-window 1)
     (vterm arg))
+  (defun my-vterm-copy-mode-done ()
+    "The built-in vterm-copy-mode-done acts weird sometimes; so this is my own implementation"
+    (interactive)
+                  (when (use-region-p)
+                    (kill-ring-save (region-beginning)
+                                    (region-end)))
+                  (vterm-copy-mode -1))
   (diminish 'vterm-copy-mode
           '(:propertize " VTermCopy" face '(:weight bold)))
   (setq vterm-buffer-name-string "vterm %s")
@@ -849,6 +933,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   ;; the :map mechanism doesn't work?
   (define-key vterm-copy-mode-map (kbd "q")
               #'(lambda () (interactive) (vterm-copy-mode -1)))
+  :commands (vterm vterm-other-window vterm-new-window)
   :bind (("C-M-S-<return>" . vterm-new-window)
          ("C-M-S-v" . vterm)
          ("H-o" . vterm-other-window)
@@ -856,6 +941,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
          ("H-<return>" . vterm-other-window)
          :map vterm-mode-map
          ("<escape>" . vterm-copy-mode)
+         ("C-c M-o" . vterm-clear-scrollback)
          ("C-S-K" . previous-line)
          ("C-S-J" . next-line)
          ("C-r" . (lambda () (interactive)
@@ -868,8 +954,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
          ("C-u" . vterm--self-insert)
          ("M->" . end-of-buffer)
          :map vterm-copy-mode-map
-         ("q" . vterm-copy-mode-done)
-         ("<escape>" . vterm-copy-mode-done))
+         ("q" . my-vterm-copy-mode-done)
+         ("<escape>" . my-vterm-copy-mode-done))
   )
 
 ;; # 📔 pdf-tools
@@ -1118,9 +1204,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
    ("H-<" . tab-previous)
    ("H->" . tab-next)
    ("H-K" . tab-next)
-   ("H-J" . tab-previous)
-   ("<mouse-9>" . tab-next)
-   ("<mouse-8>" . tab-previous)))
+   ("H-J" . tab-previous)))
 
 ;; mode for merging .pacnew files
 (use-package pacfiles-mode :commands (pacfiles))
@@ -1170,18 +1254,23 @@ read-process-output-max (* 1024 1024)) ;; 1mb
      "6ebdb33507c7db94b28d7787f802f38ac8d2b8cd08506797b3af6cdfd80632e0"
      default))
  '(package-selected-packages
-   '(ace-window adwaita-dark-theme all-the-icons-completion
-                all-the-icons-dired all-the-icons-nerd-fonts checkbox
-                company-box csv-mode daemons diminish dired-rainbow
-                dockerfile-mode emojify evil evil-numbers
-                expand-region fish-mode fringe-helper go-mode god-mode
-                goto-chg idlwave ido-completing-read+
-                ido-vertical-mode imenu-anywhere lorem-ipsum lsp-ui
-                lua-mode magit meson-mode move-text multiple-cursors
-                nerd-icons-completion olivetti pacfiles-mode pdf-tools
-                php-mode pkgbuild-mode po-mode pug-mode python-pytest
-                rainbow-mode ripgrep smex sudo-edit systemd
-                transpose-frame vala-mode vterm windresize yaml-mode
-                yapfify yasnippet-snippets ztree))
- '(warning-suppress-log-types '((unlock-file))))
+   '(adwaita-dark-theme all-the-icons-completion all-the-icons-dired
+                        all-the-icons-nerd-fonts bui ccls checkbox
+                        company-box csv-mode daemons diminish
+                        dired-rainbow dockerfile-mode edit-indirect
+                        emojify evil-numbers expand-region fish-mode
+                        fringe-helper go-mode god-mode idlwave
+                        ido-completing-read+ ido-vertical-mode
+                        imenu-anywhere llama lorem-ipsum lsp-docker
+                        lsp-treemacs lsp-ui lua-mode magit meson-mode
+                        move-text multiple-cursors
+                        nerd-icons-completion olivetti pacfiles-mode
+                        pdf-tools php-mode pkgbuild-mode po-mode
+                        projectile pug-mode python-pytest rainbow-mode
+                        ripgrep smex sudo-edit systemd transpose-frame
+                        typescript-mode vala-mode vterm web-mode
+                        windresize yaml-mode yapfify
+                        yasnippet-snippets ztree))
+ '(warning-suppress-log-types '((unlock-file)))
+ '(warning-suppress-types '((lsp-mode))))
 
