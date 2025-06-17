@@ -60,7 +60,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
   (show-paren-mode 1)
   (setq-default indent-tabs-mode nil)
   (context-menu-mode 1)
-
+  (keymap-global-set "M-SPC" "C-u C-SPC")
   ;; # 👱🏼 variables
   (setq tramp-allow-unsafe-temporary-files t
         disabled-command-function nil ;; emacs disables some commands by default; don't.
@@ -71,6 +71,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ring-bell-function 'ignore
         auto-revert-verbose nil ;; turn off autosave messages
         display-time-default-load-average nil
+        pgtk-use-im-context-on-new-connection nil ;; fixes S-SPC
         mouse-sel-mode t
         mouse-autoselect-window t ;; focus-follows-mouse
         use-short-answers t
@@ -353,6 +354,9 @@ read-process-output-max (* 1024 1024)) ;; 1mb
     ;; TODO: still to be implemented
     )
   (pdf-tools-install :no-query)
+    ;; Disable scroll bar in PDF buffers only
+  (add-hook 'pdf-view-mode-hook
+            (lambda () (scroll-bar-mode -1)))
   (setq pdf-cache-prefetch-delay 0.1
         pdf-cache-image-limit 128
         pdf-view-midnight-colors '("white smoke" . "black"))
