@@ -16,6 +16,7 @@ read-process-output-max (* 1024 1024)) ;; 1mb
 
 (pixel-scroll-precision-mode)
 (tool-bar-mode -1)
+(global-hl-line-mode)
 
 ;; modeline
 (setq-default mode-line-format
@@ -81,6 +82,11 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         display-time-default-load-average nil
         pgtk-use-im-context-on-new-connection nil ;; fixes S-SPC
         mouse-sel-mode t
+        context-menu-functions '(context-menu-local
+                                 context-menu-ffap
+                                 context-menu-middle-separator
+                                 context-menu-buffers
+                                 )
         mouse-autoselect-window t ;; focus-follows-mouse
         use-short-answers t
         ;; store all backup and autosave files in the tmp dir
@@ -330,15 +336,15 @@ read-process-output-max (* 1024 1024)) ;; 1mb
     (call-process-shell-command qpdf-command nil 0)
     )
 
-  (defun process-csv-field ()
+  (defun process-csv-field (marker)
     "Perform an action based on the csv field at point."
-    (interactive)
+    ;; (interactive)
     ;; switch to csv buffer
     (other-window -1)
-    (let ((word (thing-at-point 'sexp t)))
+    (let ((cur_word (thing-at-point 'sexp t)))
       (cond
        ;; word ends with ".pdf"
-       ((string-match-p "\\.pdf\\'" word)
+       ((string-match-p "\\.pdf\\'" cur_word)
         ;; kill current pdf to save memory 
         (other-window -1)
         (kill-current-buffer)
@@ -349,15 +355,27 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         (insert "*")
         (forward-sexp)
         ;; switch to pdf window with new document
-        (find-file-other-window word)
+        (find-file-other-window cur_word)
         (pdf-view-goto-page new-page))
        ;; word is an integer
-       ((string-match-p "^[0-9]+" word)
-        (insert "*")
+       ((string-match-p "^[0-9]+" cur_word)
+        (insert (char-to-string marker))
         (forward-sexp)
-        (other-window -1)
-        (pdf-view-goto-page (string-to-number word)))))
+        (let ((next_word (thing-at-point 'sexp t)))
+          (other-window -1)
+          (pdf-view-goto-page (string-to-number next_word))))))
     )
+
+  (defun process-csv-field-asterisk ()
+    "Call `process-csv-field` inserting an asterisk."
+    (interactive)
+    (process-csv-field ?*))
+
+  (defun process-csv-field-exclamation ()
+    "Call `process-csv-field` inserting an exclamation mark."
+    (interactive)
+    (process-csv-field ?!))
+
 
   (defun restore-current-page ()
     ;; restore page from redacted folder
@@ -410,7 +428,8 @@ read-process-output-max (* 1024 1024)) ;; 1mb
         ("/" . isearch-forward)
         ;; ("n" . nil)
         ;; ("d" . delete-current-page)
-        ("n" . process-csv-field)
+        ("n" . process-csv-field-asterisk)
+        ("y" . process-csv-field-exclamation)
         ("p" . nil)
         ("!" . pdf-view-midnight-minor-mode)
         ("m" . pdf-annot-add-highlight-markup-annotation)
