@@ -341,36 +341,21 @@ read-process-output-max (* 1024 1024)) ;; 1mb
     ;; (interactive)
     ;; switch to csv buffer
     (other-window -1)
-    (let ((cur_word (thing-at-point 'sexp t)))
+    (insert (char-to-string marker))
+    (forward-sexp)
+    (let ((next_word (thing-at-point 'sexp t)))
+      (other-window -1)
       (cond
-       ;; word ends with ".pdf"
-       ((string-match-p "\\.pdf\\'" cur_word)
-        ;; kill current pdf to save memory 
-        (other-window -1)
+       ((string-match-p "^[0-9]+" next_word)
+        (pdf-view-goto-page (string-to-number next_word)))
+       ((string-match-p "\\.pdf\\'" next_word)
         (kill-current-buffer)
-        ;; jump back to csv buffer
         (other-window -1)
         (forward-sexp)
-        ;; switch to pdf window with new document
-        (find-file-other-window cur_word)
-        (pdf-view-goto-page new-page))
-       ;; word is an integer
-       ((string-match-p "^[0-9]+" cur_word)
-        (insert (char-to-string marker))
-        (forward-sexp)
-        (let ((next_word (thing-at-point 'sexp t)))
-          (other-window -1)
-          (cond
-           ((string-match-p "^[0-9]+" next_word)
-            (pdf-view-goto-page (string-to-number next_word)))
-           ((string-match-p "\\.pdf\\'" next_word)
-             (kill-current-buffer)
-           (other-window -1)
-           (forward-sexp)
-           (setq new-page (string-to-number (thing-at-point 'sexp t)))
-           (find-file-other-window next_word)
-           (pdf-view-goto-page new-page)
-           ))))))
+        (setq new-page (string-to-number (thing-at-point 'sexp t)))
+        (find-file-other-window next_word)
+        (pdf-view-goto-page new-page)
+        )))
     )
 
   (defun process-csv-field-asterisk ()
